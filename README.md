@@ -1,82 +1,81 @@
-# 💰 Accounts Payable Dashboard | Power BI
+# 📊 Accounts Payable Dashboard (Power BI)
 
 ## 📌 Project Overview
-This project is an **Accounts Payable (AP) Analytics Dashboard** built using **Power BI** to provide clear insights into vendor payments, outstanding liabilities, invoice aging, and payment performance.
-
-The dashboard helps finance teams monitor overdue invoices, manage vendor relationships, and improve cash-flow decision-making.
+This project showcases an **Accounts Payable (AP) Dashboard** built using **Power BI**, **SQL**, and **DAX**.  
+The dashboard provides insights into invoice payments, outstanding amounts, vendor performance, and payment trends to support financial decision-making.
 
 ---
 
 ## 🎯 Business Objectives
-- Track **total payables and outstanding balances**
-- Identify **overdue invoices**
-- Analyze **invoice aging buckets**
-- Monitor **vendor-wise payment status**
-- Improve **cash flow visibility**
-
----
-
-## 📊 Key KPIs
-- Total Invoice Amount  
-- Total Outstanding Amount  
-- Overdue Amount  
-- Invoice Count  
-- Paid vs Unpaid Invoices  
-- Average Days Overdue  
-
----
-
-## 📈 Dashboard Visuals
-- KPI Cards (Total Payable, Outstanding, Overdue)
-- Invoice Aging Bucket Chart (0–30, 31–60, 61–90, 90+ Days)
-- Vendor-wise Outstanding Amount
-- Invoice Trend by Month
-- Paid vs Unpaid Invoice Count
-- Vendor Payment Status Table
-- Slicers (Date, Vendor, Payment Status)
-
----
-
-## 🧠 Data Model
-**Fact Table**
-- FactAPInvoices  
-  - Invoice Date  
-  - Due Date  
-  - Payment Date  
-  - Invoice Amount  
-  - Paid Amount  
-  - Outstanding Amount  
-  - Vendor ID  
-
-**Dimension Tables**
-- DimVendor  
-- DimDate  
-
-Star schema implemented for performance and scalability.
-
----
-
-## 🧮 Key DAX Measures
-- Total Invoice Amount  
-- Outstanding Amount  
-- Overdue Amount  
-- Invoice Count  
-- Paid Invoice Count  
-- Unpaid Invoice Count  
-- Aging Bucket  
-- Average Days Overdue  
-- Vendor Rank by Outstanding  
-
-DAX logic is built using proper **filter context** and **date intelligence**.
+- Monitor total invoice amounts, payments, and outstanding balances
+- Track overdue invoices and on-time payment percentage
+- Analyze invoice trends over time
+- Identify top vendors by outstanding amount
+- Understand ageing of invoices for better cash flow management
 
 ---
 
 ## 🛠 Tools & Technologies
-- Power BI Desktop  
-- DAX  
-- Power Query  
-- Data Modeling  
-- Excel / CSV  
+- **Power BI** – Data modeling, DAX measures, visualization
+- **SQL** – Data extraction and aggregation
+- **DAX** – KPI calculations and time intelligence
+- **Excel / CSV** – Source data
+- **GitHub** – Version control and documentation
 
 ---
+
+## 📈 Key KPIs
+- **Total Invoice Amount**
+- **Total Paid Amount**
+- **Outstanding Amount**
+- **Overdue Amount**
+- **On-Time Payment %**
+
+---
+
+## 📊 Dashboard Visuals
+- Outstanding Amount by Vendor
+- Invoice Count by Month-Year
+- Top Vendors by Outstanding Amount
+- Monthly Trend of Invoices
+- Ageing by Outstanding Amount
+
+---
+
+## 🧮 DAX Measures Used
+- Total Invoice Amount
+- Total Paid Amount
+- Outstanding Amount
+- Overdue Amount
+- On-Time Payment %
+- Ageing Bucket Logic
+- Top Vendor Logic
+
+**DAX Measures File Location:**  
+`/DAX/AP_Dashboard_DAX_Measures.dax`
+
+---
+
+## 🗄 SQL Queries
+SQL was used to:
+- Aggregate invoices, payments, and outstanding amounts
+- Group data by date, vendor, and invoice status
+- Prepare datasets for Power BI modeling
+
+**SQL File Location:**  
+`/SQL/AP_Dashboard_SQL.sql`
+
+---
+
+## 💡 Key Learnings
+- Implemented **invoice ageing** and overdue tracking
+- Designed **dynamic KPIs** using DAX
+- Used **Top N logic** for vendor analysis
+- Followed **star schema** data modeling
+- Built a **finance-focused, executive-friendly dashboard layout**
+
+---
+
+## 📷 Dashboard Preview
+
 

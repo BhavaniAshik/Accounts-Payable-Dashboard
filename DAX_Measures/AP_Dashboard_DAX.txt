@@ -1,0 +1,98 @@
+/* =========================================
+   ACCOUNTS PAYABLE DASHBOARD – DAX MEASURES
+   ========================================= */
+
+/* ---------- KPI MEASURES ---------- */
+
+Total Invoice Amount =
+SUM ( Invoices[InvoiceAmount] )
+
+Total Paid Amount =
+SUM ( Invoices[PaidAmount] )
+
+Outstanding Amount =
+[Total Invoice Amount] - [Total Paid Amount]
+
+Overdue Amount =
+CALCULATE (
+    [Outstanding Amount],
+    Invoices[DueDate] < TODAY (),
+    ISBLANK ( Invoices[PaymentDate] )
+)
+
+On-Time Payment % =
+DIVIDE (
+    CALCULATE (
+        COUNTROWS ( Invoices ),
+        Invoices[PaymentDate] <= Invoices[DueDate]
+    ),
+    CALCULATE (
+        COUNTROWS ( Invoices ),
+        NOT ISBLANK ( Invoices[PaymentDate] )
+    ),
+    0
+)
+
+/* ---------- SUPPORTING MEASURES ---------- */
+
+Total Invoices =
+COUNTROWS ( Invoices )
+
+Invoice Count =
+COUNTROWS ( Invoices )
+
+Days Overdue =
+DATEDIFF (
+    Invoices[DueDate],
+    TODAY (),
+    DAY
+)
+
+/* ---------- VISUAL MEASURES ---------- */
+
+/* Outstanding Amount by Vendor */
+Outstanding by Vendor =
+CALCULATE (
+    [Outstanding Amount],
+    ALLEXCEPT (
+        DimVendor,
+        DimVendor[VendorName]
+    )
+)
+
+/* Vendor Rank (Top Vendors Visual) */
+Vendor Rank =
+RANKX (
+    ALL ( DimVendor[VendorName] ),
+    [Outstanding Amount],
+    ,
+    DESC,
+    DENSE
+)
+
+/* Invoice Count by Month-Year */
+Invoice Count by Month =
+CALCULATE (
+    [Invoice Count],
+    VALUES ( DimDate[Month-Year] )
+)
+
+/* Monthly Invoice Amount Trend */
+Monthly Invoice Amount =
+CALCULATE (
+    [Total Invoice Amount],
+    VALUES ( DimDate[Month-Year] )
+)
+
+/* Aging Bucket */
+Aging Bucket =
+SWITCH (
+    TRUE (),
+    ISBLANK ( [Days Overdue] ), BLANK (),
+    [Days Overdue] <= 30, "0–30 Days",
+    [Days Overdue] <= 60, "31–60 Days",
+    [Days Overdue] <= 90, "61–90 Days",
+    "90+ Days"
+)
+
+

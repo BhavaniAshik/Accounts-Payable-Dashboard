@@ -108,16 +108,6 @@ GROUP BY
 ORDER BY Invoice_Year, Invoice_Month;
 
 ------------------------------------------------------------
--- 10. Average Days Overdue
-------------------------------------------------------------
-SELECT
-    AVG(DATEDIFF(DAY, DueDate, GETDATE())) AS Avg_Days_Overdue
-FROM FactAPInvoices
-WHERE
-    DueDate < GETDATE()
-    AND (PaymentDate IS NULL OR PaidAmount < InvoiceAmount);
-
-------------------------------------------------------------
 -- 11. Vendor Payment Status Summary
 ------------------------------------------------------------
 SELECT

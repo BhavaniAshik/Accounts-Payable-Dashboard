@@ -1,123 +1,97 @@
-/* =========================================================
+/* =========================================
    ACCOUNTS PAYABLE DASHBOARD – SQL QUERIES
-   Author      : Bhavani Ashik
-   Description : SQL queries used for Accounts Payable
-                 analytics in Power BI dashboard
-   ========================================================= */
+   ========================================= */
 
-------------------------------------------------------------
--- 1. Total Invoice Amount
-------------------------------------------------------------
-SELECT
+/* ---------- KPI QUERIES ---------- */
+
+/* Total Invoice Amount */
+SELECT 
     SUM(InvoiceAmount) AS Total_Invoice_Amount
-FROM FactAPInvoices;
+FROM Invoices;
 
-------------------------------------------------------------
--- 2. Total Paid Amount
-------------------------------------------------------------
-SELECT
+/* Total Paid Amount */
+SELECT 
     SUM(PaidAmount) AS Total_Paid_Amount
-FROM FactAPInvoices;
+FROM Invoices;
 
-------------------------------------------------------------
--- 3. Outstanding Amount
-------------------------------------------------------------
-SELECT
-    SUM(InvoiceAmount - ISNULL(PaidAmount, 0)) AS Outstanding_Amount
-FROM FactAPInvoices;
+/* Outstanding Amount */
+SELECT 
+    SUM(InvoiceAmount - PaidAmount) AS Outstanding_Amount
+FROM Invoices;
 
-------------------------------------------------------------
--- 4. Overdue Amount
-------------------------------------------------------------
-SELECT
-    SUM(InvoiceAmount - ISNULL(PaidAmount, 0)) AS Overdue_Amount
-FROM FactAPInvoices
-WHERE
-    DueDate < GETDATE()
-    AND (PaymentDate IS NULL OR PaidAmount < InvoiceAmount);
+/* Overdue Amount */
+SELECT 
+    SUM(InvoiceAmount - PaidAmount) AS Overdue_Amount
+FROM Invoices
+WHERE DueDate < GETDATE()
+  AND PaymentDate IS NULL;
 
-------------------------------------------------------------
--- 5. Invoice Count
-------------------------------------------------------------
-SELECT
-    COUNT(DISTINCT InvoiceID) AS Invoice_Count
-FROM FactAPInvoices;
+/* On-Time Payment Percentage */
+SELECT 
+    CAST(
+        COUNT(CASE WHEN PaymentDate <= DueDate THEN 1 END) * 100.0 
+        / COUNT(*) 
+        AS DECIMAL(5,2)
+    ) AS On_Time_Payment_Percentage
+FROM Invoices
+WHERE PaymentDate IS NOT NULL;
 
-------------------------------------------------------------
--- 6. Paid vs Unpaid Invoice Count
-------------------------------------------------------------
-SELECT
-    CASE
-        WHEN PaymentDate IS NULL THEN 'Unpaid'
-        ELSE 'Paid'
-    END AS Payment_Status,
+/* ---------- VISUAL QUERIES ---------- */
+
+/* Outstanding Amount by Vendor */
+SELECT 
+    V.VendorName,
+    SUM(I.InvoiceAmount - I.PaidAmount) AS Outstanding_Amount
+FROM Invoices I
+JOIN DimVendor V 
+    ON I.VendorID = V.VendorID
+GROUP BY V.VendorName
+ORDER BY Outstanding_Amount DESC;
+
+/* Top Vendors by Outstanding Amount */
+SELECT TOP 10
+    V.VendorName,
+    SUM(I.InvoiceAmount - I.PaidAmount) AS Outstanding_Amount
+FROM Invoices I
+JOIN DimVendor V 
+    ON I.VendorID = V.VendorID
+GROUP BY V.VendorName
+ORDER BY Outstanding_Amount DESC;
+
+/* Invoice Count by Month-Year */
+SELECT 
+    YEAR(InvoiceDate) AS Year,
+    MONTH(InvoiceDate) AS Month,
     COUNT(*) AS Invoice_Count
-FROM FactAPInvoices
-GROUP BY
-    CASE
-        WHEN PaymentDate IS NULL THEN 'Unpaid'
-        ELSE 'Paid'
-    END;
+FROM Invoices
+GROUP BY YEAR(InvoiceDate), MONTH(InvoiceDate)
+ORDER BY Year, Month;
 
-------------------------------------------------------------
--- 7. Invoice Aging Buckets
-------------------------------------------------------------
+/* Monthly Invoice Amount Trend */
+SELECT 
+    YEAR(InvoiceDate) AS Year,
+    MONTH(InvoiceDate) AS Month,
+    SUM(InvoiceAmount) AS Monthly_Invoice_Amount
+FROM Invoices
+GROUP BY YEAR(InvoiceDate), MONTH(InvoiceDate)
+ORDER BY Year, Month;
+
+/* Aging by Outstanding Amount */
 SELECT
     CASE
-        WHEN DATEDIFF(DAY, DueDate, GETDATE()) <= 30 THEN '0-30 Days'
-        WHEN DATEDIFF(DAY, DueDate, GETDATE()) <= 60 THEN '31-60 Days'
-        WHEN DATEDIFF(DAY, DueDate, GETDATE()) <= 90 THEN '61-90 Days'
+        WHEN DATEDIFF(DAY, DueDate, GETDATE()) <= 30 THEN '0–30 Days'
+        WHEN DATEDIFF(DAY, DueDate, GETDATE()) <= 60 THEN '31–60 Days'
+        WHEN DATEDIFF(DAY, DueDate, GETDATE()) <= 90 THEN '61–90 Days'
         ELSE '90+ Days'
     END AS Aging_Bucket,
-    SUM(InvoiceAmount - ISNULL(PaidAmount, 0)) AS Outstanding_Amount
-FROM FactAPInvoices
-WHERE
-    PaymentDate IS NULL OR PaidAmount < InvoiceAmount
+    SUM(InvoiceAmount - PaidAmount) AS Outstanding_Amount
+FROM Invoices
+WHERE PaymentDate IS NULL
 GROUP BY
     CASE
-        WHEN DATEDIFF(DAY, DueDate, GETDATE()) <= 30 THEN '0-30 Days'
-        WHEN DATEDIFF(DAY, DueDate, GETDATE()) <= 60 THEN '31-60 Days'
-        WHEN DATEDIFF(DAY, DueDate, GETDATE()) <= 90 THEN '61-90 Days'
+        WHEN DATEDIFF(DAY, DueDate, GETDATE()) <= 30 THEN '0–30 Days'
+        WHEN DATEDIFF(DAY, DueDate, GETDATE()) <= 60 THEN '31–60 Days'
+        WHEN DATEDIFF(DAY, DueDate, GETDATE()) <= 90 THEN '61–90 Days'
         ELSE '90+ Days'
-    END;
-
-------------------------------------------------------------
--- 8. Vendor-wise Outstanding Amount
-------------------------------------------------------------
-SELECT
-    V.VendorName,
-    SUM(F.InvoiceAmount - ISNULL(F.PaidAmount, 0)) AS Outstanding_Amount
-FROM FactAPInvoices F
-JOIN DimVendor V
-    ON F.VendorID = V.VendorID
-GROUP BY V.VendorName
-ORDER BY Outstanding_Amount DESC;
-
-------------------------------------------------------------
--- 9. Invoice Trend by Month
-------------------------------------------------------------
-SELECT
-    YEAR(InvoiceDate) AS Invoice_Year,
-    MONTH(InvoiceDate) AS Invoice_Month,
-    COUNT(InvoiceID) AS Invoice_Count,
-    SUM(InvoiceAmount) AS Total_Invoice_Amount
-FROM FactAPInvoices
-GROUP BY
-    YEAR(InvoiceDate),
-    MONTH(InvoiceDate)
-ORDER BY Invoice_Year, Invoice_Month;
-
-------------------------------------------------------------
--- 11. Vendor Payment Status Summary
-------------------------------------------------------------
-SELECT
-    V.VendorName,
-    COUNT(F.InvoiceID) AS Total_Invoices,
-    SUM(F.InvoiceAmount) AS Total_Invoice_Amount,
-    SUM(ISNULL(F.PaidAmount, 0)) AS Paid_Amount,
-    SUM(F.InvoiceAmount - ISNULL(F.PaidAmount, 0)) AS Outstanding_Amount
-FROM FactAPInvoices F
-JOIN DimVendor V
-    ON F.VendorID = V.VendorID
-GROUP BY V.VendorName
-ORDER BY Outstanding_Amount DESC;
+    END
+ORDER BY Aging_Bucket;

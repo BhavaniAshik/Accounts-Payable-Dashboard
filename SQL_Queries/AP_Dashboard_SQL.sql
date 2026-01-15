@@ -1,6 +1,6 @@
 /* =========================================================
    ACCOUNTS PAYABLE DASHBOARD – SQL QUERIES
-   Author      : Bhavani Gowda
+   Author      : Bhavani Ashik
    Description : SQL queries used for Accounts Payable
                  analytics in Power BI dashboard
    ========================================================= */

@@ -4,8 +4,8 @@
 
 /* ---------- KPI MEASURES ---------- */
 
-Total Invoice Amount =
-SUM ( Invoices[InvoiceAmount] )
+Total invoice amount = 
+SUM(Invoices[InvoiceAmount])
 
 Total Paid Amount =
 SUM ( Invoices[PaidAmount] )
@@ -13,33 +13,35 @@ SUM ( Invoices[PaidAmount] )
 Outstanding Amount =
 [Total Invoice Amount] - [Total Paid Amount]
 
-Overdue Amount =
-CALCULATE (
-    [Outstanding Amount],
-    Invoices[DueDate] < TODAY (),
-    ISBLANK ( Invoices[PaymentDate] )
+Overdue Amount = 
+CALCULATE([Outstanding Amount],
+USERELATIONSHIP(DimDate[Date], Invoices[DueDate]),
+Invoices[DueDate] < MAX(Dimdate[Date]),Invoices[InvoiceAmount]>Invoices[PaidAmount])
 )
 
-On-Time Payment % =
-DIVIDE (
-    CALCULATE (
-        COUNTROWS ( Invoices ),
+On-Time Payment % (All Invoices) = 
+DIVIDE(
+    CALCULATE(
+        COUNT(Invoices[InvoiceID]),
+        NOT ISBLANK(Invoices[PaymentDate]),
         Invoices[PaymentDate] <= Invoices[DueDate]
     ),
-    CALCULATE (
-        COUNTROWS ( Invoices ),
-        NOT ISBLANK ( Invoices[PaymentDate] )
-    ),
-    0
+    COUNT(Invoices[InvoiceID])
 )
 
 /* ---------- SUPPORTING MEASURES ---------- */
 
-Total Invoices =
-COUNTROWS ( Invoices )
+Invoice Count = 
+COUNT(Invoices[InvoiceID])
 
-Invoice Count =
-COUNTROWS ( Invoices )
+Invoice Count% Contribution = 
+DIVIDE([Invoice Count],CALCULATE([Invoice Count],ALLSELECTED(Invoices)))
+
+Outstanding % contribution = 
+DIVIDE([Outstanding Amount],CALCULATE([Outstanding Amount],ALLSELECTED(Invoices)))
+
+TOP N Filter = 
+SWITCH(TRUE(),[Vendor Rank]<= SELECTEDVALUE('TOP N'[TOP N]),1,0)
 
 Days Overdue =
 DATEDIFF (
@@ -50,25 +52,10 @@ DATEDIFF (
 
 /* ---------- VISUAL MEASURES ---------- */
 
-/* Outstanding Amount by Vendor */
-Outstanding by Vendor =
-CALCULATE (
-    [Outstanding Amount],
-    ALLEXCEPT (
-        DimVendor,
-        DimVendor[VendorName]
-    )
-)
 
 /* Vendor Rank (Top Vendors Visual) */
-Vendor Rank =
-RANKX (
-    ALL ( DimVendor[VendorName] ),
-    [Outstanding Amount],
-    ,
-    DESC,
-    DENSE
-)
+Vendor Rank = 
+RANKX(ALL(Dimvendor[VendorName]),[Total invoice amount], , DESC,Dense)
 
 /* Invoice Count by Month-Year */
 Invoice Count by Month =
@@ -77,12 +64,6 @@ CALCULATE (
     VALUES ( DimDate[Month-Year] )
 )
 
-/* Monthly Invoice Amount Trend */
-Monthly Invoice Amount =
-CALCULATE (
-    [Total Invoice Amount],
-    VALUES ( DimDate[Month-Year] )
-)
 
 /* Aging Bucket */
 Aging Bucket =
